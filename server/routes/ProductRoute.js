@@ -19,6 +19,7 @@ router.post(
   "/",
   authenticate,
   authorize(["admin"]),
+  productController.uploadProductImage,
   productController.createProduct
 );
 

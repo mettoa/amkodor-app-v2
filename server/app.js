@@ -11,6 +11,7 @@ const productRoutes = require("./routes/ProductRoute");
 //middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);

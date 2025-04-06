@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const upload = require("../config/multer");
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -9,8 +10,11 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
+exports.uploadProductImage = upload.single("image");
 exports.createProduct = async (req, res) => {
-  const { productname, description, price, category_id, image_url } = req.body;
+  const { productname, description, price, category_id } = req.body;
+  const image_url = req.file ? `/images/products/${req.file.filename}` : null;
+
   try {
     const product = await Product.create({
       productname,
