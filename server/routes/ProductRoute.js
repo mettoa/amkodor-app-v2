@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { authenticate, authorize } = require("../middlewares/auth");
 const productController = require("../controllers/ProductController");
+const upload = require("../config/multer");
 
 router.get("/filter", productController.filterProducts);
 router.get("/", productController.getAllProducts);
@@ -12,6 +13,7 @@ router.put(
   "/:id",
   authenticate,
   authorize(["admin"]),
+  upload.single("image"),
   productController.updateProduct
 );
 
@@ -19,7 +21,7 @@ router.post(
   "/",
   authenticate,
   authorize(["admin"]),
-  productController.uploadProductImage,
+  upload.single("image"),
   productController.createProduct
 );
 

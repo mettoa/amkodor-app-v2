@@ -1,5 +1,6 @@
 const Product = require("../models/Product");
 const upload = require("../config/multer");
+const fs = require("fs").promises;
 
 exports.getAllProducts = async (req, res) => {
   try {
@@ -11,8 +12,14 @@ exports.getAllProducts = async (req, res) => {
 };
 
 exports.uploadProductImage = upload.single("image");
+
 exports.createProduct = async (req, res) => {
   const { productname, description, price, category_id } = req.body;
+  if (!productname || !price) {
+    return res
+      .status(400)
+      .json({ error: "Product name and price are required" });
+  }
   const image_url = req.file ? `/images/products/${req.file.filename}` : null;
 
   try {
@@ -23,7 +30,7 @@ exports.createProduct = async (req, res) => {
       category_id,
       image_url,
     });
-    res.status(200).json(product);
+    res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -44,8 +51,12 @@ exports.getProductByID = async (req, res) => {
 };
 
 exports.updateProduct = async (req, res) => {
-  const { productname, description, price, category_id, image_url } = req.body;
+  const { productname, description, price, category_id } = req.body;
   const id = req.params.id;
+  const image_url = req.file
+    ? `/images/products/${req.file.filename}`
+    : req.body.image_url;
+
   try {
     const product = await Product.update(
       id,
@@ -55,6 +66,9 @@ exports.updateProduct = async (req, res) => {
       category_id,
       image_url
     );
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
     res.status(200).json(product);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -96,11 +110,18 @@ exports.filterProducts = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.delete(req.params.id);
+    const product = await Product.findByID(req.params.id);
     if (!product) {
-      return res.status(404).json({ error: "product not found" });
+      return res.status(404).json({ error: "Product not found" });
     }
-    res.status(200).json(product);
+    await Product.delete(req.params.id);
+    if (product.image_url) {
+      const imagePath = `./public/images/${product.image_url}`;
+      await fs
+        .unlink(imagePath)
+        .catch((err) => console.error("Failed to delete image:", err));
+    }
+    res.status(200).json({ message: "Product deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
