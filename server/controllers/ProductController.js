@@ -15,6 +15,7 @@ exports.uploadProductImage = upload.single("image");
 
 exports.createProduct = async (req, res) => {
   const { productname, description, price, category_id } = req.body;
+
   if (!productname || !price) {
     return res
       .status(400)
