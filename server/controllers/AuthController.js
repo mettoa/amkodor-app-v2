@@ -20,7 +20,15 @@ exports.register = async (req, res) => {
       role,
     });
 
-    res.status(201).json(user);
+    const token = jwt.sign(
+      { user_id: user.user_id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    const { password: _, ...userData } = user;
+
+    res.status(201).json({ ...userData, token });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
