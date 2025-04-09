@@ -42,7 +42,15 @@ const Product = {
   },
 
   async getAll() {
-    const query = "SELECT * FROM Products";
+    const query = `
+      SELECT 
+        p.*, 
+        c.name AS category_name
+      FROM 
+        Products p
+      JOIN 
+        Categories c ON p.category_id = c.category_id
+    `;
     const { rows } = await pool.query(query);
     return rows;
   },
@@ -69,9 +77,19 @@ const Product = {
   },
 
   async findByID(product_id) {
-    const query = "SELECT * FROM Products WHERE product_id = $1";
+    const query = `
+      SELECT 
+        p.*, 
+        c.name AS category_name
+      FROM 
+        Products p
+      JOIN 
+        Categories c ON p.category_id = c. category_id
+      WHERE 
+        p.product_id = $1
+    `;
     const { rows } = await pool.query(query, [product_id]);
-    return rows;
+    return rows[0];
   },
 };
 
