@@ -1,4 +1,5 @@
 import React, { useContext } from "react";
+import { Text } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -10,6 +11,7 @@ import CatalogScreen from "./src/screens/CatalogScreen";
 import SearchScreen from "./src/screens/SearchScreen";
 import CartScreen from "./src/screens/CartScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
+import ProductDetailScreen from "./src/screens/ProductDetailScreen";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -17,12 +19,27 @@ const Tab = createBottomTabNavigator();
 const AppTabs = () => (
   <Tab.Navigator
     screenOptions={({ route }) => ({
+      headerTitleAlign: "center",
       tabBarIcon: ({ color, size }) => {
         let iconName;
-        if (route.name === "Catalog") iconName = "home";
-        else if (route.name === "Search") iconName = "search";
-        else if (route.name === "Cart") iconName = "cart";
-        else if (route.name === "Profile") iconName = "person";
+
+        switch (route.name) {
+          case "Catalog":
+            iconName = "home";
+            break;
+          case "Search":
+            iconName = "search";
+            break;
+          case "Cart":
+            iconName = "cart";
+            break;
+          case "Profile":
+            iconName = "person";
+            break;
+          default:
+            iconName = "ellipse";
+        }
+
         return <Icon name={iconName} size={size} color={color} />;
       },
       tabBarActiveTintColor: "blue",
@@ -62,12 +79,31 @@ const AuthStack = () => (
   </Stack.Navigator>
 );
 
+const MainStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen
+      name="Tabs"
+      component={AppTabs}
+      options={{ headerShown: false, title: "Каталог" }}
+    />
+    <Stack.Screen
+      name="ProductDetail"
+      component={ProductDetailScreen}
+      options={{ title: "Товар" }}
+    />
+  </Stack.Navigator>
+);
+
 const Navigation = () => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
+  if (loading) {
+    return <Text>Загрузка...</Text>;
+  }
+
   return (
     <NavigationContainer>
-      {isAuthenticated ? <AppTabs /> : <AuthStack />}
+      {isAuthenticated ? <MainStack /> : <AuthStack />}
     </NavigationContainer>
   );
 };
