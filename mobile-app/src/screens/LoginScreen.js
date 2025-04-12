@@ -8,10 +8,10 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import axios from "axios";
+import api from "../api";
 import { AuthContext } from "../contexts/AuthContext";
 
-const LoginScreen = () => {
+const LoginScreen = ({ navigation }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -25,46 +25,27 @@ const LoginScreen = () => {
     }
 
     try {
-      if (isLogin) {
-        const response = await axios.post("http://localhost:3000/auth/login", {
-          email,
-          password,
-        });
-        if (response.data.token) {
-          const userData = {
-            username: response.data.username,
-            email: response.data.email,
-          };
-          login(response.data.token, userData);
-        } else {
-          Alert.alert("Ошибка", "Неверные учетные данные");
-        }
-      } else {
-        const response = await axios.post(
-          "http://localhost:3000/auth/register",
-          {
-            username,
-            email,
-            password,
-          }
-        );
-        if (response.data.token) {
-          const userData = {
-            username: response.data.username,
-            email: response.data.email,
-          };
-          login(response.data.token, userData);
+      const endpoint = isLogin ? "/auth/login" : "/auth/register";
+      const payload = isLogin
+        ? { email, password }
+        : { username, email, password };
+
+      const response = await api.post(endpoint, payload);
+
+      if (response.data.token) {
+        const userData = {
+          username: response.data.username,
+          email: response.data.email,
+        };
+        login(response.data.token, userData);
+        if (!isLogin) {
           Alert.alert("Успех", "Регистрация прошла успешно!");
-        } else {
-          Alert.alert("Ошибка", "Не удалось зарегистрироваться");
         }
       }
     } catch (error) {
-      console.error(
-        "Ошибка:",
-        error.response ? error.response.data : error.message
-      );
-      Alert.alert("Ошибка", "Не удалось подключиться к серверу");
+      const errorMessage =
+        error.response?.data?.message || "Не удалось подключиться к серверу";
+      Alert.alert("Ошибка", errorMessage);
     }
   };
 

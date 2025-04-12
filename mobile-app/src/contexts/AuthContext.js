@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const storedToken = await AsyncStorage.getItem("token");
         const storedUser = await AsyncStorage.getItem("user");
+        console.log("AsyncStorage:", { storedToken, storedUser });
         if (storedToken) {
           setToken(storedToken);
           setIsAuthenticated(true);
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error("Ошибка при загрузке данных:", error);
+        console.error("Ошибка загрузки данных:", error);
       } finally {
         setLoading(false);
       }
@@ -32,13 +33,14 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (newToken, userData) => {
     try {
+      console.log("Login данные:", { newToken, userData });
       await AsyncStorage.setItem("token", newToken);
       await AsyncStorage.setItem("user", JSON.stringify(userData));
       setToken(newToken);
       setUser(userData);
       setIsAuthenticated(true);
     } catch (error) {
-      console.error("Ошибка при сохранении данных:", error);
+      console.error("Ошибка сохранения данных:", error);
     }
   };
 
@@ -50,7 +52,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error("Ошибка при удалении данных:", error);
+      console.error("Ошибка удаления данных:", error);
     }
   };
 

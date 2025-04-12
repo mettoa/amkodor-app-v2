@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import axios from "axios";
+import api from "../api";
 
 const ProductDetailScreen = ({ route }) => {
   const { productId } = route.params;
@@ -11,9 +12,7 @@ const ProductDetailScreen = ({ route }) => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(
-          `http://localhost:3000/products/${productId}`
-        );
+        const response = await api.get(`/products/${productId}`);
         const productData = Array.isArray(response.data)
           ? response.data[0]
           : response.data;

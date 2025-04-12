@@ -28,7 +28,7 @@ const AppTabs = () => (
             iconName = "home";
             break;
           case "Search":
-            iconName = "search";
+            iconName = "podium";
             break;
           case "Cart":
             iconName = "cart";
@@ -42,7 +42,7 @@ const AppTabs = () => (
 
         return <Icon name={iconName} size={size} color={color} />;
       },
-      tabBarActiveTintColor: "blue",
+      tabBarActiveTintColor: "black",
       tabBarInactiveTintColor: "gray",
     })}
   >
@@ -54,7 +54,7 @@ const AppTabs = () => (
     <Tab.Screen
       name="Search"
       component={SearchScreen}
-      options={{ title: "Поиск" }}
+      options={{ title: "Сравнить" }}
     />
     <Tab.Screen
       name="Cart"
