@@ -22,7 +22,7 @@ router.post("/", authenticate, userController.createUser);
 router.put(
   "/:id",
   authenticate,
-  authorize(["admin"]),
+  authorize(["buyer"], ["admin"]),
   userController.updateUser
 );
 

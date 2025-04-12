@@ -8,6 +8,7 @@ const userRoutes = require("./routes/UserRoutes");
 const authRoutes = require("./routes/AuthRoutes");
 const productRoutes = require("./routes/ProductRoutes");
 const orderRoutes = require("./routes/OrderRoutes");
+const cartRoutes = require("./routes/CartRoutes");
 
 //middleware
 app.use(cors());
@@ -17,6 +18,7 @@ app.use("/users", userRoutes);
 app.use("/auth", authRoutes);
 app.use("/products", productRoutes);
 app.use("/orders", orderRoutes);
+app.use("/carts", cartRoutes);
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
