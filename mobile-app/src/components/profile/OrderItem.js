@@ -1,81 +1,61 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 const OrderItem = ({
-  item,
-  expandedOrder,
-  toggleOrderDetails,
+  order,
+  isExpanded,
+  onToggle,
   formatDate,
   getStatusColor,
   getOrderTotal,
-  cancelOrder,
+  onCancelOrder,
 }) => {
-  const isExpanded = expandedOrder === item.order_id;
-
   return (
     <View style={styles.orderCard}>
       <TouchableOpacity
         style={styles.orderHeader}
-        onPress={() => toggleOrderDetails(item.order_id)}
+        onPress={() => onToggle(order.order_id)}
       >
-        <View style={styles.orderHeaderContent}>
-          <Text style={styles.orderId}>Заказ #{item.order_id}</Text>
+        <View>
+          <Text style={styles.orderTitle}>Заказ #{order.order_id}</Text>
           <Text style={styles.orderDate}>
-            {item.created_at ? formatDate(item.created_at) : "Недавно"}
+            от {formatDate(order.created_at)}
           </Text>
         </View>
-        <View style={styles.orderHeaderInfo}>
+        <View style={styles.statusContainer}>
           <Text
-            style={[styles.orderStatus, { color: getStatusColor(item.status) }]}
+            style={[styles.status, { color: getStatusColor(order.status) }]}
           >
-            {item.status || "В обработке"}
+            {order.status}
           </Text>
-          <Text style={styles.orderTotal}>{getOrderTotal(item)}</Text>
+          <Ionicons
+            name={isExpanded ? "chevron-up" : "chevron-down"}
+            size={24}
+            color="#555"
+          />
         </View>
       </TouchableOpacity>
 
       {isExpanded && (
         <View style={styles.orderDetails}>
-          <Text style={styles.detailsTitle}>Информация о заказе:</Text>
-
-          {item.items && item.items.length > 0 ? (
-            <>
-              <Text style={styles.itemsTitle}>Товары:</Text>
-              {item.items.map((product, idx) => (
-                <View key={idx} style={styles.itemContainer}>
-                  <Text style={styles.itemName}>
-                    •{" "}
-                    {product.productname || product.name || `Товар ${idx + 1}`}
-                  </Text>
-                  <Text style={styles.itemDetails}>
-                    ID: {product.product_id}, Количество: {product.quantity}
-                  </Text>
-                  <Text style={styles.itemPrice}>
-                    Цена: {product.price} руб.
-                  </Text>
-                </View>
-              ))}
-              <View style={styles.totalContainer}>
-                <Text style={styles.totalText}>
-                  Общая сумма: {getOrderTotal(item)}
-                </Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noItemsText}>
-              Информация о товарах недоступна
-            </Text>
-          )}
-
-          <Text style={styles.addressTitle}>Адрес доставки:</Text>
-          <Text style={styles.addressText}>
-            {item.shipping_address || "Адрес не указан"}
+          <Text style={styles.detailsTitle}>Товары:</Text>
+          {order.items?.map((item) => (
+            <View key={item.product_id} style={styles.orderItem}>
+              <Text style={styles.itemName}>{item.productname}</Text>
+              <Text style={styles.itemPrice}>
+                {parseFloat(item.price).toFixed(2)} руб. x {item.quantity} ={" "}
+                {(parseFloat(item.price) * item.quantity).toFixed(2)} руб.
+              </Text>
+            </View>
+          ))}
+          <Text style={styles.totalPrice}>
+            Итого: {getOrderTotal(order)} руб.
           </Text>
-
-          {item.status !== "Cancelled" && item.status !== "Delivered" && (
+          {order.status === "Pending" && (
             <TouchableOpacity
               style={styles.cancelButton}
-              onPress={() => cancelOrder(item.order_id)}
+              onPress={() => onCancelOrder(order.order_id)}
             >
               <Text style={styles.cancelButtonText}>Отменить заказ</Text>
             </TouchableOpacity>
@@ -88,35 +68,24 @@ const OrderItem = ({
 
 const styles = StyleSheet.create({
   orderCard: {
-    marginBottom: 15,
-    borderRadius: 8,
     backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 15,
     borderWidth: 1,
     borderColor: "#ddd",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
-    overflow: "hidden",
+    elevation: 2,
   },
   orderHeader: {
-    padding: 15,
-    backgroundColor: "#f9f9f9",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  orderHeaderContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    padding: 15,
   },
-  orderHeaderInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  orderId: {
+  orderTitle: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
@@ -124,88 +93,53 @@ const styles = StyleSheet.create({
   orderDate: {
     fontSize: 14,
     color: "#666",
+    marginTop: 3,
   },
-  orderStatus: {
-    fontSize: 15,
-    fontWeight: "500",
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  orderTotal: {
-    fontSize: 15,
+  status: {
     fontWeight: "bold",
-    color: "#333",
+    marginRight: 10,
   },
   orderDetails: {
     padding: 15,
-    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
   },
   detailsTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    color: "#333",
-  },
-  itemsTitle: {
     fontSize: 15,
     fontWeight: "bold",
-    marginTop: 5,
     marginBottom: 10,
-    color: "#555",
   },
-  itemContainer: {
-    paddingLeft: 10,
-    marginBottom: 10,
+  orderItem: {
+    marginBottom: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   itemName: {
-    fontSize: 15,
-    color: "#333",
-  },
-  itemDetails: {
     fontSize: 14,
-    color: "#666",
-    marginLeft: 15,
+    fontWeight: "500",
   },
   itemPrice: {
     fontSize: 14,
-    fontWeight: "500",
-    color: "#333",
-    marginLeft: 15,
+    color: "#666",
+    marginTop: 3,
   },
-  totalContainer: {
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    paddingTop: 10,
-    marginTop: 10,
-    alignItems: "flex-end",
-  },
-  totalText: {
+  totalPrice: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
-  },
-  noItemsText: {
-    fontSize: 14,
-    color: "#666",
-    fontStyle: "italic",
-    textAlign: "center",
-    marginVertical: 10,
-  },
-  addressTitle: {
-    fontSize: 15,
-    fontWeight: "bold",
-    marginTop: 15,
-    marginBottom: 5,
-    color: "#555",
-  },
-  addressText: {
-    fontSize: 14,
-    color: "#666",
-    marginLeft: 10,
+    marginTop: 10,
+    alignSelf: "flex-end",
   },
   cancelButton: {
     backgroundColor: "#dc3545",
-    padding: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
     borderRadius: 5,
-    alignItems: "center",
+    alignSelf: "flex-start",
     marginTop: 15,
   },
   cancelButtonText: {

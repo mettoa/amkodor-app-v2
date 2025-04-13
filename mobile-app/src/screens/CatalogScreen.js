@@ -1,25 +1,14 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback,
-  useContext,
-} from "react";
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  Button,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect, useContext } from "react";
+import { View, Text, FlatList, StyleSheet, Alert } from "react-native";
 import api from "../api";
-import { Ionicons } from "@expo/vector-icons";
 import { AuthContext } from "../contexts/AuthContext";
 import { CartContext } from "../contexts/CartContext";
+
+import ProductCard from "../components/product/ProductCard";
+import SearchBar from "../components/filters/SearchBar";
+import FilterModal from "../components/filters/FilterModal";
+
+import useProductFilters from "../hooks/useProductFilters";
 
 const CatalogScreen = ({ navigation }) => {
   const {
@@ -28,18 +17,20 @@ const CatalogScreen = ({ navigation }) => {
     loading: authLoading,
   } = useContext(AuthContext);
   const { addToCart } = useContext(CartContext);
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortModalVisible, setSortModalVisible] = useState(false);
 
-  const [filters, setFilters] = useState({
-    searchQuery: "",
-    selectedCategories: new Set(),
-    sortOption: null,
-  });
-
-  const { searchQuery, selectedCategories, sortOption } = filters;
+  const {
+    filters,
+    filteredProducts,
+    toggleCategory,
+    handleSortChange,
+    handleSearchChange,
+    resetFilters,
+  } = useProductFilters(products);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,131 +71,30 @@ const CatalogScreen = ({ navigation }) => {
     }
   }, [isAuthenticated, token, authLoading]);
 
-  const filterAndSortProducts = useCallback(() => {
-    let result = [...products];
-
-    if (searchQuery) {
-      result = result.filter((item) =>
-        item.productname.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    if (selectedCategories.size > 0) {
-      result = result.filter((item) =>
-        selectedCategories.has(item.category_id)
-      );
-    }
-
-    if (sortOption === "priceAsc") {
-      result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-    } else if (sortOption === "priceDesc") {
-      result.sort((a, b) => parseFloat(b.price) - parseFloat(b.price));
-    } else if (sortOption === "name") {
-      result.sort((a, b) => a.productname.localeCompare(b.productname));
-    }
-
-    return result;
-  }, [products, searchQuery, selectedCategories, sortOption]);
-
-  const filteredAndSortedProducts = useMemo(
-    () => filterAndSortProducts(),
-    [filterAndSortProducts]
-  );
-
-  const toggleCategory = useCallback((categoryId) => {
-    setFilters((prevFilters) => {
-      const updatedCategories = new Set(prevFilters.selectedCategories);
-      if (updatedCategories.has(categoryId)) {
-        updatedCategories.delete(categoryId);
-      } else {
-        updatedCategories.add(categoryId);
-      }
-      return { ...prevFilters, selectedCategories: updatedCategories };
+  const handleAddToCart = async (productId) => {
+    console.log("Добавление в корзину:", {
+      isAuthenticated,
+      token,
+      productId,
     });
-  }, []);
 
-  const handleSortChange = useCallback((option) => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      sortOption: option,
-    }));
-  }, []);
+    if (!isAuthenticated || !token) {
+      Alert.alert("Ошибка", "Необходимо авторизоваться.");
+      return;
+    }
 
-  const handleAddToCart = useCallback(
-    async (productId) => {
-      console.log("Добавление в корзину:", {
-        isAuthenticated,
-        token,
-        productId,
-      });
-
-      if (!isAuthenticated || !token) {
-        Alert.alert("Ошибка", "Необходимо авторизоваться.");
-        return;
-      }
-
-      const success = await addToCart(productId);
-      if (success) {
-        Alert.alert("Успех", "Товар добавлен в корзину");
-      } else {
-        Alert.alert("Ошибка", "Не удалось добавить товар в корзину");
-      }
-    },
-    [isAuthenticated, token, addToCart]
-  );
-
-  const renderProduct = ({ item }) => {
-    const categoryName = item.category_name || "Неизвестная категория";
-    return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() =>
-          navigation.navigate("ProductDetail", { productId: item.product_id })
-        }
-      >
-        <Text style={styles.name}>{item.productname}</Text>
-        <Text style={styles.description}>{item.description}</Text>
-        <Text style={styles.price}>{item.price} руб.</Text>
-        <Button
-          title="В корзину"
-          onPress={() => handleAddToCart(item.product_id)}
-        />
-        <Text style={styles.category}>Категория: {categoryName}</Text>
-      </TouchableOpacity>
-    );
+    const success = await addToCart(productId);
+    if (success) {
+      Alert.alert("Успех", "Товар добавлен в корзину");
+    } else {
+      Alert.alert("Ошибка", "Не удалось добавить товар в корзину");
+    }
   };
 
-  const renderCategoryCheckbox = ({ item }) => (
-    <TouchableOpacity
-      style={styles.checkboxItem}
-      onPress={() => toggleCategory(item.category_id)}
-    >
-      <Ionicons
-        name={
-          selectedCategories.has(item.category_id)
-            ? "checkbox"
-            : "checkbox-outline"
-        }
-        size={24}
-        color="#000"
-      />
-      <Text style={styles.checkboxText}>{item.name}</Text>
-    </TouchableOpacity>
-  );
-
-  const renderSortOption = (label, option) => (
-    <TouchableOpacity
-      style={styles.checkboxItem}
-      onPress={() => handleSortChange(option)}
-    >
-      <Ionicons
-        name={sortOption === option ? "checkbox" : "checkbox-outline"}
-        size={24}
-        color="#000"
-      />
-      <Text style={styles.checkboxText}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const handleResetFilters = () => {
+    resetFilters();
+    setSortModalVisible(false);
+  };
 
   if (loading || authLoading) {
     return (
@@ -216,71 +106,36 @@ const CatalogScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Поиск по названию..."
-          value={searchQuery}
-          onChangeText={(text) =>
-            setFilters((prevFilters) => ({
-              ...prevFilters,
-              searchQuery: text,
-            }))
-          }
-        />
-        <TouchableOpacity
-          style={styles.sortButton}
-          onPress={() => setSortModalVisible(true)}
-        >
-          <Ionicons name="filter" size={24} color="#000" />
-        </TouchableOpacity>
-      </View>
+      <SearchBar
+        searchQuery={filters.searchQuery}
+        onSearchChange={handleSearchChange}
+        onFilterPress={() => setSortModalVisible(true)}
+      />
 
-      <Modal
+      <FilterModal
         visible={sortModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setSortModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Фильтры и сортировка</Text>
-
-            <Text style={styles.sectionTitle}>Категории</Text>
-            <FlatList
-              data={categories}
-              renderItem={renderCategoryCheckbox}
-              keyExtractor={(item) => item.category_id.toString()}
-              style={styles.filterList}
-            />
-
-            <Text style={styles.sectionTitle}>Сортировка</Text>
-            {renderSortOption("Цена по возрастанию", "priceAsc")}
-            {renderSortOption("Цена по убыванию", "priceDesc")}
-            {renderSortOption("По названию (А-Я)", "name")}
-
-            <Button
-              title="Применить"
-              onPress={() => setSortModalVisible(false)}
-            />
-            <Button
-              title="Сбросить"
-              onPress={() => {
-                setFilters({
-                  searchQuery: "",
-                  selectedCategories: new Set(),
-                  sortOption: null,
-                });
-                setSortModalVisible(false);
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setSortModalVisible(false)}
+        onReset={handleResetFilters}
+        categories={categories}
+        selectedCategories={filters.selectedCategories}
+        onToggleCategory={toggleCategory}
+        sortOption={filters.sortOption}
+        onSortChange={handleSortChange}
+      />
 
       <FlatList
-        data={filteredAndSortedProducts}
-        renderItem={renderProduct}
+        data={filteredProducts}
+        renderItem={({ item }) => (
+          <ProductCard
+            item={item}
+            onPress={() =>
+              navigation.navigate("ProductDetail", {
+                productId: item.product_id,
+              })
+            }
+            onAddToCart={() => handleAddToCart(item.product_id)}
+          />
+        )}
         keyExtractor={(item) => item.product_id.toString()}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
@@ -294,66 +149,7 @@ const CatalogScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  searchContainer: {
-    flexDirection: "row",
-    padding: 10,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    alignItems: "center",
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    marginRight: 10,
-  },
-  sortButton: {
-    padding: 5,
-  },
   list: { padding: 10 },
-  card: {
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  name: { fontSize: 18, fontWeight: "bold", color: "#333" },
-  description: { fontSize: 14, color: "#666", marginVertical: 5 },
-  price: { fontSize: 16, color: "#000", marginBottom: 10 },
-  category: { fontSize: 12, color: "#888", marginTop: 5 },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 10,
-    width: "80%",
-    maxHeight: "80%",
-  },
-  modalTitle: { fontSize: 18, marginBottom: 10, textAlign: "center" },
-  sectionTitle: { fontSize: 16, fontWeight: "bold", marginVertical: 10 },
-  filterList: { width: "100%", maxHeight: 200 },
-  checkboxItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 5,
-  },
-  checkboxText: { fontSize: 16, marginLeft: 10 },
   emptyText: { textAlign: "center", fontSize: 16, color: "#888" },
 });
 
