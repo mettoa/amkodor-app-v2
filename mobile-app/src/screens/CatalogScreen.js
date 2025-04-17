@@ -4,7 +4,7 @@ import api from "../api";
 import { AuthContext } from "../contexts/AuthContext";
 import { CartContext } from "../contexts/CartContext";
 
-import ProductCard from "../components/product/ProductCard";
+import ProductCard from "../components/ProductCard";
 import SearchBar from "../components/filters/SearchBar";
 import FilterModal from "../components/filters/FilterModal";
 
@@ -37,6 +37,7 @@ const CatalogScreen = ({ navigation }) => {
       if (!isAuthenticated || !token) {
         console.log("Пользователь не авторизован:", { isAuthenticated, token });
         setLoading(false);
+        navigation.navigate("LoginScreen");
         return;
       }
 
