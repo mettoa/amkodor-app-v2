@@ -20,7 +20,7 @@ router.put(
 router.post(
   "/",
   authenticate,
-  authorize(["buyer"]),
+  authorize(["admin"]),
   upload.single("image"),
   productController.createProduct
 );
