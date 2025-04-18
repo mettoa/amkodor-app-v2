@@ -20,7 +20,10 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("Response data:", response.data);
+    return response;
+  },
   (error) => {
     console.error("Ошибка в ответе:", error.response?.data || error.message);
     return Promise.reject(error);

@@ -31,13 +31,12 @@ const LoginScreen = ({ navigation }) => {
         : { username, email, password };
 
       const response = await api.post(endpoint, payload);
+      console.log("Login/Register response:", response.data);
 
       if (response.data.token) {
-        const userData = {
-          username: response.data.username,
-          email: response.data.email,
-        };
-        login(response.data.token, userData);
+        const { token, password, ...userData } = response.data;
+        console.log("User data to be sent to login:", userData);
+        await login(token, userData);
         if (!isLogin) {
           Alert.alert("Успех", "Регистрация прошла успешно!");
         }

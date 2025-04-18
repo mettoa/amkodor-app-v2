@@ -10,16 +10,21 @@ const useProfile = () => {
   const [profileData, setProfileData] = useState({
     username: "",
     email: "",
-    password: "",
+    password: "", // Текущий пароль
     newPassword: "",
     confirmPassword: "",
     address: "",
+    city: "",
+    state: "",
+    postal_code: "",
+    country: "",
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
+      console.log("Setting profile data from user:", user);
       setProfileData({
         username: user.username || "",
         email: user.email || "",
@@ -27,6 +32,10 @@ const useProfile = () => {
         newPassword: "",
         confirmPassword: "",
         address: user.address || "",
+        city: user.city || "",
+        state: user.state || "",
+        postal_code: user.postal_code || "",
+        country: user.country || "",
       });
     }
   }, [user]);
@@ -62,7 +71,7 @@ const useProfile = () => {
 
     if (profileData.newPassword) {
       if (profileData.newPassword.length < 6) {
-        newErrors.newPassword = "Пароль должен быть не менее 6 символов";
+        newErrors.newPassword = "Новый пароль должен быть не менее 6 символов";
       }
 
       if (!profileData.confirmPassword) {
@@ -83,6 +92,7 @@ const useProfile = () => {
 
   const handleSubmitProfile = async () => {
     if (!validateForm()) {
+      console.log("Form validation failed:", errors);
       return;
     }
 
@@ -93,6 +103,10 @@ const useProfile = () => {
         username: profileData.username,
         email: profileData.email,
         address: profileData.address,
+        city: profileData.city,
+        state: profileData.state,
+        postal_code: profileData.postal_code,
+        country: profileData.country,
       };
 
       if (profileData.newPassword) {
@@ -100,19 +114,24 @@ const useProfile = () => {
         updateData.newPassword = profileData.newPassword;
       }
 
-      await api.put("/users/profile", updateData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      console.log("Sending profile update with data:", updateData);
 
-      if (typeof updateUserProfile === "function") {
-        updateUserProfile({
+      const response = await api.put("/users/profile", updateData);
+
+      console.log("Profile update response:", response.data);
+
+      if (
+        typeof updateUserProfile === "function" &&
+        response.data &&
+        response.data.user
+      ) {
+        const updatedUser = {
           ...user,
-          username: profileData.username,
-          email: profileData.email,
-          address: profileData.address,
-        });
+          ...response.data.user,
+        };
+
+        console.log("Updating user profile with:", updatedUser);
+        updateUserProfile(updatedUser);
       }
 
       Alert.alert("Успех", "Профиль успешно обновлен");

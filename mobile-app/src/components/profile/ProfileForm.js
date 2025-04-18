@@ -47,14 +47,56 @@ const ProfileForm = ({
         {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
       </View>
 
+      <Text style={styles.sectionTitle}>Адрес доставки</Text>
+
       <View style={styles.formGroup}>
-        <Text style={styles.label}>Адрес</Text>
+        <Text style={styles.label}>Улица, дом</Text>
         <TextInput
           style={styles.input}
           value={profileData.address}
           onChangeText={(text) => handleInputChange("address", text)}
-          placeholder="Введите адрес доставки"
-          multiline
+          placeholder="Введите улицу и номер дома"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Город</Text>
+        <TextInput
+          style={styles.input}
+          value={profileData.city}
+          onChangeText={(text) => handleInputChange("city", text)}
+          placeholder="Введите город"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Область/регион</Text>
+        <TextInput
+          style={styles.input}
+          value={profileData.state}
+          onChangeText={(text) => handleInputChange("state", text)}
+          placeholder="Введите область или регион"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Почтовый индекс</Text>
+        <TextInput
+          style={styles.input}
+          value={profileData.postal_code}
+          onChangeText={(text) => handleInputChange("postal_code", text)}
+          placeholder="Введите почтовый индекс"
+          keyboardType="numeric"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Страна</Text>
+        <TextInput
+          style={styles.input}
+          value={profileData.country}
+          onChangeText={(text) => handleInputChange("country", text)}
+          placeholder="Введите страну"
         />
       </View>
 
