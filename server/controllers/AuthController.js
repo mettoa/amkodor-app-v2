@@ -49,7 +49,10 @@ exports.login = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    const { password: _, ...userData } = user;
+    const userWithAddress = await User.findById(user.user_id);
+    console.log("User data sent to client on login:", userWithAddress);
+    const { password: _, ...userData } = userWithAddress;
+
     res.status(200).json({ ...userData, token });
   } catch (error) {
     res.status(500).json({ error: error.message });

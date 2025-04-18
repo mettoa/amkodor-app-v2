@@ -3,6 +3,8 @@ const router = express.Router();
 const userController = require("../controllers/UserController");
 const { authenticate, authorize } = require("../middlewares/auth");
 
+router.get("/profile/me", authenticate, userController.getMyProfile);
+
 router.get(
   "/email",
   authenticate,
@@ -10,15 +12,11 @@ router.get(
   userController.getUserByEmail
 );
 router.get("/", authenticate, authorize(["admin"]), userController.getAllUsers);
-router.get(
-  "/:id",
-  authenticate,
-  authorize(["admin"]),
-  userController.getUserByID
-);
+router.get("/:id", authenticate, userController.getUserByID);
 
 router.post("/", authenticate, userController.createUser);
 
+router.put("/profile", authenticate, userController.updateProfile);
 router.put(
   "/:id",
   authenticate,
