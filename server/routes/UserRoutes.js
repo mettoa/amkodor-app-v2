@@ -14,6 +14,12 @@ router.get(
 router.get("/", authenticate, authorize(["admin"]), userController.getAllUsers);
 router.get("/:id", authenticate, userController.getUserByID);
 
+router.delete(
+  "/:id",
+  authenticate,
+  authorize(["admin"]),
+  userController.deleteUser
+);
 router.post("/", authenticate, userController.createUser);
 
 router.put("/profile", authenticate, userController.updateProfile);
@@ -22,13 +28,6 @@ router.put(
   authenticate,
   authorize(["buyer"], ["admin"]),
   userController.updateUser
-);
-
-router.delete(
-  "/:id",
-  authenticate,
-  authorize(["admin"]),
-  userController.deleteUser
 );
 
 module.exports = router;

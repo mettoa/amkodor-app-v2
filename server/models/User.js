@@ -13,10 +13,10 @@ const User = {
     return rows[0];
   },
 
-  async delete(user_id) {
-    const query = "DELETE FROM Users WHERE user_id = $1";
-    const { rows } = await pool.query(query, [user_id]);
-    return rows[0];
+  async delete(id) {
+    const query = "DELETE FROM Users WHERE user_id = $1 RETURNING user_id";
+    const { rows, rowCount } = await pool.query(query, [id]);
+    return { deleted: rowCount > 0, user: rows[0] };
   },
 
   async getAll() {

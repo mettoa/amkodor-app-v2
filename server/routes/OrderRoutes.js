@@ -27,7 +27,7 @@ router.get(
 router.put(
   "/:id/status",
   authenticate,
-  authorize(["buyer"], ["admin"]),
+  authorize(["admin"]),
   orderController.updateOrderStatus
 );
 
