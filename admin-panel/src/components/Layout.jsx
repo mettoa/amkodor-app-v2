@@ -38,15 +38,6 @@ const Layout = () => {
 
   const menuItems = [
     {
-      key: "/dashboard",
-      icon: <DashboardOutlined />,
-      label: "Дашборд",
-      onClick: () => {
-        navigate("/dashboard");
-        if (mobileView) setDrawerVisible(false);
-      },
-    },
-    {
       key: "/users",
       icon: <UserOutlined />,
       label: "Пользователи",

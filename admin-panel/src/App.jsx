@@ -10,10 +10,9 @@ import ProductsPage from "./pages/ProductsPage";
 import AddProductPage from "./pages/AddProductPage";
 import EditProductPage from "./pages/EditProductPage";
 import UsersPage from "./pages/UsersPage";
-import OrdersPage from "./pages/OrdersPage"; // Убедитесь, что импорт есть
+import OrdersPage from "./pages/OrdersPage";
+import ReportsPage from "./pages/ReportsPage";
 
-const DashboardPage = () => <div>Dashboard Page</div>;
-const ReportsPage = () => <div>Reports Page</div>;
 const NotFoundPage = () => <div>404 Not Found</div>;
 
 function App() {
@@ -28,9 +27,7 @@ function App() {
           alignItems: "center",
           height: "100vh",
         }}
-      >
-        <Spin size="large" tip="Инициализация приложения..." />
-      </div>
+      ></div>
     );
   }
 
@@ -41,7 +38,6 @@ function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/products/add" element={<AddProductPage />} />
@@ -51,7 +47,7 @@ function App() {
           </Route>
         </Route>
 
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<Navigate to="/orders" replace />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </ConfigProvider>

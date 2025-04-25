@@ -25,12 +25,23 @@ const OrdersPage = () => {
       const response = await axios.get("/orders");
       console.log("Данные заказов:", response.data);
       const ordersData = response.data.data || [];
-      setOrders(ordersData);
-      setFilteredOrders(ordersData);
-      message.success("Заказы успешно загружены");
+      if (!Array.isArray(ordersData)) {
+        console.error("ordersData не является массивом:", ordersData);
+        message.error("Некорректный формат данных заказов");
+        setOrders([]);
+        setFilteredOrders([]);
+      } else {
+        setOrders(ordersData);
+        setFilteredOrders(ordersData);
+        message.success("Заказы успешно загружены");
+      }
     } catch (error) {
-      message.error("Ошибка при загрузке заказов");
-      console.error("Ошибка:", error);
+      console.error("Ошибка при загрузке заказов:", error);
+      message.error(
+        error.response?.data?.error || "Ошибка при загрузке заказов"
+      );
+      setOrders([]);
+      setFilteredOrders([]);
     } finally {
       setLoading(false);
     }
@@ -54,6 +65,7 @@ const OrdersPage = () => {
   };
 
   const handleViewDetails = (order) => {
+    console.log("Выбранный заказ:", order);
     setSelectedOrder(order);
     setIsModalVisible(true);
   };
@@ -201,7 +213,7 @@ const OrdersPage = () => {
             <h3>Товары в заказе</h3>
             <Table
               columns={detailColumns}
-              dataSource={selectedOrder.items}
+              dataSource={selectedOrder.items || []}
               rowKey="product_id"
               pagination={false}
             />
