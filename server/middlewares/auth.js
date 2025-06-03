@@ -1,14 +1,30 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-exports.authenticate = (req, res, next) => {
+exports.authenticate = async (req, res, next) => {
   const token = req.header("Authorization")?.replace("Bearer ", "");
   if (!token) return res.status(401).json({ error: "Access denied" });
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Проверяем актуальную информацию о пользователе из базы данных
+    const user = await User.findById(decoded.user_id);
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    // Проверяем, не заблокирован ли пользователь
+    if (user.is_blocked) {
+      return res.status(403).json({
+        error: "Ваш аккаунт заблокирован. Обратитесь к администратору.",
+      });
+    }
+
     req.user = {
-      user_id: decoded.user_id,
-      role: decoded.role,
+      user_id: user.user_id,
+      role: user.role,
+      is_blocked: user.is_blocked,
     };
     next();
   } catch (error) {

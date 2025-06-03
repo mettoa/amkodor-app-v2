@@ -81,19 +81,34 @@ const Order = {
 
   async getAllOrders() {
     const query = `
-    SELECT o.order_id, o.total_cost, o.status, o.created_at, u.username,
-      jsonb_agg(jsonb_build_object(
-        'product_id', oi.product_id,
-        'productname', p.productname,
-        'quantity', oi.quantity,
-        'price', oi.price_at_purchase
-      )) as items
-    FROM Orders o
-    JOIN Users u ON o.user_id = u.user_id
-    JOIN order_items oi ON o.order_id = oi.order_id
-    JOIN products p ON oi.product_id = p.product_id
-    GROUP BY o.order_id, u.user_id
-    ORDER BY o.created_at DESC
+  SELECT 
+    o.order_id, 
+    o.total_cost, 
+    o.status, 
+    o.created_at, 
+    u.username,
+    jsonb_agg(jsonb_build_object(
+      'product_id', oi.product_id,
+      'productname', p.productname,
+      'quantity', oi.quantity,
+      'price', oi.price_at_purchase,
+      'category_id', p.category_id,
+      'category_name', c.name  
+    )) as items
+  FROM 
+    Orders o
+  JOIN 
+    users u ON o.user_id = u.user_id
+  JOIN 
+    order_items oi ON o.order_id = oi.order_id
+  JOIN 
+    products p ON oi.product_id = p.product_id
+  JOIN 
+    categories c ON p.category_id = c.category_id  
+  GROUP BY 
+    o.order_id, u.user_id
+  ORDER BY 
+    o.created_at DESC
   `;
     const { rows } = await pool.query(query);
     return rows;

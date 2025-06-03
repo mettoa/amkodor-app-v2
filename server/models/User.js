@@ -4,19 +4,27 @@ const pool = require("../db");
 const User = {
   async create({ username, password, email, role }) {
     const query = `
-      INSERT INTO Users (username, password, email, role)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO Users (username, password, email, role, is_blocked)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
-    const values = [username, password, email, role];
+    const values = [username, password, email, role, false];
     const { rows } = await pool.query(query, values);
     return rows[0];
   },
 
-  async delete(id) {
-    const query = "DELETE FROM Users WHERE user_id = $1 RETURNING user_id";
+  async block(id) {
+    const query =
+      "UPDATE Users SET is_blocked = true WHERE user_id = $1 RETURNING user_id, is_blocked";
     const { rows, rowCount } = await pool.query(query, [id]);
-    return { deleted: rowCount > 0, user: rows[0] };
+    return { blocked: rowCount > 0, user: rows[0] };
+  },
+
+  async unblock(id) {
+    const query =
+      "UPDATE Users SET is_blocked = false WHERE user_id = $1 RETURNING user_id, is_blocked";
+    const { rows, rowCount } = await pool.query(query, [id]);
+    return { unblocked: rowCount > 0, user: rows[0] };
   },
 
   async getAll() {

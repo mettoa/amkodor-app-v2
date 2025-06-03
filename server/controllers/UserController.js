@@ -16,6 +16,16 @@ exports.getUserByID = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    // Проверяем, заблокирован ли пользователь
+    if (user.is_blocked) {
+      return res.status(403).json({
+        error: "User is blocked",
+        message: "Ваш аккаунт заблокирован. Обратитесь к администратору.",
+        is_blocked: true,
+      });
+    }
+
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -29,6 +39,16 @@ exports.getUserByEmail = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    // // Проверяем, заблокирован ли пользователь
+    // if (user.is_blocked) {
+    //   return res.status(403).json({
+    //     error: "User is blocked",
+    //     message: "Ваш аккаунт заблокирован. Обратитесь к администратору.",
+    //     is_blocked: true,
+    //   });
+    // }
+
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -51,6 +71,15 @@ exports.getMyProfile = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден" });
     }
+
+    // Проверяем, заблокирован ли пользователь
+    if (user.is_blocked) {
+      return res.status(403).json({
+        message: "Ваш аккаунт заблокирован. Обратитесь к администратору.",
+        is_blocked: true,
+      });
+    }
+
     const { password, ...userData } = user;
     res.status(200).json(userData);
   } catch (error) {
@@ -70,16 +99,27 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-exports.deleteUser = async (req, res) => {
+exports.blockUser = async (req, res) => {
   const id = req.params.id;
   try {
-    const result = await User.delete(id);
-    if (!result.deleted) {
-      return res
-        .status(200)
-        .json({ message: "User already deleted or not found" });
+    const result = await User.block(id);
+    if (!result.blocked) {
+      return res.status(404).json({ message: "Пользователь не найден" });
     }
-    res.status(200).json({ message: "User deleted successfully" });
+    res.status(200).json({ message: "Пользователь успешно заблокирован" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.unblockUser = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const result = await User.unblock(id);
+    if (!result.unblocked) {
+      return res.status(404).json({ message: "Пользователь не найден" });
+    }
+    res.status(200).json({ message: "Пользователь успешно разблокирован" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -104,6 +144,14 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findById(user_id);
     if (!user) {
       return res.status(404).json({ message: "Пользователь не найден" });
+    }
+
+    // Проверяем, заблокирован ли пользователь
+    if (user.is_blocked) {
+      return res.status(403).json({
+        message: "Ваш аккаунт заблокирован. Обратитесь к администратору.",
+        is_blocked: true,
+      });
     }
 
     let updatedUserData = {

@@ -14,12 +14,20 @@ router.get(
 router.get("/", authenticate, authorize(["admin"]), userController.getAllUsers);
 router.get("/:id", authenticate, userController.getUserByID);
 
-router.delete(
-  "/:id",
+// Заменяем удаление на блокировку/разблокировку
+router.patch(
+  "/:id/block",
   authenticate,
   authorize(["admin"]),
-  userController.deleteUser
+  userController.blockUser
 );
+router.patch(
+  "/:id/unblock",
+  authenticate,
+  authorize(["admin"]),
+  userController.unblockUser
+);
+
 router.post("/", authenticate, userController.createUser);
 
 router.put("/profile", authenticate, userController.updateProfile);
