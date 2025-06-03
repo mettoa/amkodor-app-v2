@@ -16,7 +16,12 @@ import AuthRequired from "../components/shared/AuthRequired";
 import useProfile from "../hooks/useProfile";
 import useOrders from "../hooks/useOrders";
 
-import { formatDate, getStatusColor, getOrderTotal } from "../utils/formatters";
+import {
+  formatDate,
+  getStatusColor,
+  getOrderTotal,
+  translateOrderStatus,
+} from "../utils/formatters";
 
 const ProfileScreen = () => {
   const {
@@ -85,6 +90,7 @@ const ProfileScreen = () => {
               formatDate={formatDate}
               getStatusColor={getStatusColor}
               getOrderTotal={getOrderTotal}
+              translateOrderStatus={translateOrderStatus}
               cancelOrder={handleCancelOrder}
             />
           )}

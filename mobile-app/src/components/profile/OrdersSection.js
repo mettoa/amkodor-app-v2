@@ -9,6 +9,7 @@ const OrdersSection = ({
   formatDate,
   getStatusColor,
   getOrderTotal,
+  translateOrderStatus,
   cancelOrder,
 }) => {
   if (orders.length === 0) {
@@ -31,6 +32,7 @@ const OrdersSection = ({
           formatDate={formatDate}
           getStatusColor={getStatusColor}
           getOrderTotal={getOrderTotal}
+          translateOrderStatus={translateOrderStatus}
           onCancelOrder={cancelOrder}
         />
       ))}

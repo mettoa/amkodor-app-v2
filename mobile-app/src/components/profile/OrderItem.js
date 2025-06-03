@@ -9,8 +9,14 @@ const OrderItem = ({
   formatDate,
   getStatusColor,
   getOrderTotal,
+  translateOrderStatus,
   onCancelOrder,
 }) => {
+  // Проверяем статус на английском, так как в БД они хранятся на английском
+  const canCancel = order.status === "Pending" || order.status === "Processing";
+
+  console.log("Статус заказа:", order.status, "Можно отменить:", canCancel);
+
   return (
     <View style={styles.orderCard}>
       <TouchableOpacity
@@ -27,7 +33,7 @@ const OrderItem = ({
           <Text
             style={[styles.status, { color: getStatusColor(order.status) }]}
           >
-            {order.status}
+            {translateOrderStatus(order.status)}
           </Text>
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
@@ -52,7 +58,7 @@ const OrderItem = ({
           <Text style={styles.totalPrice}>
             Итого: {getOrderTotal(order)} руб.
           </Text>
-          {order.status === "Pending" && (
+          {canCancel && (
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => onCancelOrder(order.order_id)}

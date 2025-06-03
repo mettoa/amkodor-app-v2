@@ -8,10 +8,13 @@ import {
   Alert,
   ScrollView,
   SafeAreaView,
+  Dimensions,
 } from "react-native";
 import api, { IMAGE_BASE_URL } from "../api";
 import { AuthContext } from "../contexts/AuthContext";
 import { CartContext } from "../contexts/CartContext";
+
+const { width: screenWidth } = Dimensions.get("window");
 
 const ProductDetailScreen = ({ route }) => {
   const { productId } = route.params;
@@ -62,16 +65,37 @@ const ProductDetailScreen = ({ route }) => {
     }
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   if (loading) {
-    return <Text style={styles.message}>Загрузка...</Text>;
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.loadingText}>Загрузка...</Text>
+      </View>
+    );
   }
 
   if (error) {
-    return <Text style={styles.message}>{error}</Text>;
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
   }
 
   if (!product) {
-    return <Text style={styles.message}>Товар не найден</Text>;
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>Товар не найден</Text>
+      </View>
+    );
   }
 
   const imageUrl = product.image_url
@@ -80,31 +104,68 @@ const ProductDetailScreen = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {imageUrl && (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        )}
-        <Text style={styles.name}>{product.productname}</Text>
-        <Text style={styles.description}>{product.description}</Text>
-        <Text style={styles.price}>{product.price} руб.</Text>
-        <Text style={styles.detail}>ID: {product.product_id}</Text>
-        <Text style={styles.detail}>Категория: {product.category_name}</Text>
-        <Text style={styles.detail}>Категория ID: {product.category_id}</Text>
-        <Text style={styles.detail}>
-          Создан: {new Date(product.created_at).toLocaleString()}
-        </Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Изображение товара */}
+        <View style={styles.imageContainer}>
+          {imageUrl ? (
+            <Image
+              source={{ uri: imageUrl }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.noImageContainer}>
+              <Text style={styles.noImageText}>Нет изображения</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Основная информация */}
+        <View style={styles.contentContainer}>
+          <View style={styles.headerSection}>
+            <Text style={styles.productName}>{product.productname}</Text>
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>{product.price}</Text>
+              <Text style={styles.currency}>₽</Text>
+            </View>
+          </View>
+
+          {/* Категория */}
+          {product.category_name && (
+            <View style={styles.categoryContainer}>
+              <Text style={styles.categoryLabel}>Категория:</Text>
+              <Text style={styles.categoryName}>{product.category_name}</Text>
+            </View>
+          )}
+
+          {/* Описание */}
+          {product.description && (
+            <View style={styles.descriptionSection}>
+              <Text style={styles.descriptionTitle}>Описание</Text>
+              <Text style={styles.description}>{product.description}</Text>
+            </View>
+          )}
+
+          {/* Дата добавления */}
+          <View style={styles.metaInfo}>
+            <Text style={styles.dateText}>
+              Добавлен: {formatDate(product.created_at)}
+            </Text>
+          </View>
+        </View>
       </ScrollView>
 
+      {/* Кнопка добавления в корзину */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.addToCartButton}
           onPress={() => handleAddToCart(product.product_id)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.addToCartButtonText}>В корзину</Text>
+          <Text style={styles.addToCartButtonText}>Добавить в корзину</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -114,42 +175,124 @@ const ProductDetailScreen = ({ route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 80,
+    paddingBottom: 100,
+  },
+  imageContainer: {
+    width: "100%",
+    height: screenWidth * 0.8,
+    backgroundColor: "#f8f9fa",
   },
   image: {
     width: "100%",
-    height: 300,
-    borderRadius: 8,
+    height: "100%",
+  },
+  noImageContainer: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f1f3f4",
+  },
+  noImageText: {
+    fontSize: 16,
+    color: "#9aa0a6",
+    fontWeight: "500",
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  headerSection: {
     marginBottom: 20,
   },
-  name: {
+  productName: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#202124",
+    lineHeight: 32,
+    marginBottom: 12,
+  },
+  priceContainer: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#1976d2",
+  },
+  currency: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1976d2",
+    marginLeft: 4,
+  },
+  categoryContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+  },
+  categoryLabel: {
+    fontSize: 14,
+    color: "#5f6368",
+    fontWeight: "500",
+    marginRight: 8,
+  },
+  categoryName: {
+    fontSize: 14,
+    color: "#1976d2",
+    fontWeight: "600",
+    backgroundColor: "#e3f2fd",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  descriptionSection: {
+    marginBottom: 20,
+  },
+  descriptionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#202124",
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: "#666",
-    marginBottom: 10,
+    color: "#5f6368",
+    lineHeight: 24,
+    textAlign: "justify",
   },
-  price: {
-    fontSize: 20,
-    color: "#000",
-    fontWeight: "bold",
-    marginBottom: 10,
+  metaInfo: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e8eaed",
   },
-  detail: {
+  dateText: {
     fontSize: 14,
-    color: "#888",
-    marginBottom: 5,
+    color: "#9aa0a6",
+    fontStyle: "italic",
   },
-  message: {
+  loadingText: {
     fontSize: 18,
+    color: "#5f6368",
+    fontWeight: "500",
+  },
+  errorText: {
+    fontSize: 18,
+    color: "#d93025",
+    fontWeight: "500",
     textAlign: "center",
-    marginTop: 50,
   },
   buttonContainer: {
     position: "absolute",
@@ -158,20 +301,37 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: "white",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: "#e8eaed",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
   },
   addToCartButton: {
-    backgroundColor: "#097ffe",
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: "#1976d2",
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
+    shadowColor: "#1976d2",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   addToCartButtonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 });
 

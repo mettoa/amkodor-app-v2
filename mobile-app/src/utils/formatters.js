@@ -11,6 +11,19 @@ export const formatDate = (dateString) => {
   }
 };
 
+export const translateOrderStatus = (status) => {
+  const statusTranslations = {
+    Pending: "Ожидает обработки",
+    Processing: "В обработке",
+    Processing: "В обработке",
+    Shipped: "Отправлен",
+    Delivered: "Доставлен",
+    Cancelled: "Отменен",
+  };
+
+  return statusTranslations[status] || status;
+};
+
 export const getStatusColor = (status) => {
   switch (status) {
     case "Pending":
