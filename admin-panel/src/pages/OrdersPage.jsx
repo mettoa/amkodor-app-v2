@@ -94,7 +94,7 @@ const OrdersPage = () => {
 
   const columns = [
     {
-      title: "ID заказа",
+      title: "Номер заказа",
       dataIndex: "order_id",
       key: "order_id",
       sorter: (a, b) => a.order_id - b.order_id,
@@ -122,10 +122,10 @@ const OrdersPage = () => {
           style={{ width: 150 }}
           onChange={(value) => handleStatusChange(record.order_id, value)}
         >
-          <Option value="Pending">Pending</Option>
-          <Option value="Shipped">Shipped</Option>
-          <Option value="Delivered">Delivered</Option>
-          <Option value="Cancelled">Cancelled</Option>
+          <Option value="Pending">В обработке</Option>
+          <Option value="Shipped">Отправлен</Option>
+          <Option value="Delivered">Доставлен</Option>
+          <Option value="Cancelled">Отменен</Option>
         </Select>
       ),
     },
@@ -194,7 +194,7 @@ const OrdersPage = () => {
         {selectedOrder && (
           <div>
             <p>
-              <strong>ID заказа:</strong> {selectedOrder.order_id}
+              <strong>Номер заказа:</strong> {selectedOrder.order_id}
             </p>
             <p>
               <strong>Пользователь:</strong> {selectedOrder.username}

@@ -1,6 +1,6 @@
 // src/pages/UsersPage.jsx
 import React, { useState, useEffect } from "react";
-import { Table, Button, message, Space } from "antd";
+import { Table, Button, message, Space, Tag } from "antd";
 import axios from "axios";
 import SearchPanel from "../components/SearchPanel";
 import { useAuth } from "../hooks/useAuth";
@@ -30,28 +30,42 @@ const UsersPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleBlock = async (id) => {
     if (id === user?.user_id) {
-      message.error("Нельзя удалить текущего пользователя");
+      message.error("Нельзя заблокировать текущего пользователя");
       return;
     }
 
     try {
-      const response = await axios.delete(`/users/${id}`);
-      const updatedUsers = users.filter((user) => user.user_id !== id);
+      const response = await axios.patch(`/users/${id}/block`);
+      const updatedUsers = users.map((user) =>
+        user.user_id === id ? { ...user, is_blocked: true } : user
+      );
       setUsers(updatedUsers);
       setFilteredUsers(updatedUsers);
-      message.success(response.data.message || "Пользователь успешно удален");
+      message.success(
+        response.data.message || "Пользователь успешно заблокирован"
+      );
     } catch (error) {
-      if (error.response?.status === 404) {
-        const updatedUsers = users.filter((user) => user.user_id !== id);
-        setUsers(updatedUsers);
-        setFilteredUsers(updatedUsers);
-        message.success("Пользователь уже удален или не найден");
-      } else {
-        message.error("Ошибка при удалении пользователя");
-        console.error("Ошибка:", error);
-      }
+      message.error("Ошибка при блокировке пользователя");
+      console.error("Ошибка:", error);
+    }
+  };
+
+  const handleUnblock = async (id) => {
+    try {
+      const response = await axios.patch(`/users/${id}/unblock`);
+      const updatedUsers = users.map((user) =>
+        user.user_id === id ? { ...user, is_blocked: false } : user
+      );
+      setUsers(updatedUsers);
+      setFilteredUsers(updatedUsers);
+      message.success(
+        response.data.message || "Пользователь успешно разблокирован"
+      );
+    } catch (error) {
+      message.error("Ошибка при разблокировке пользователя");
+      console.error("Ошибка:", error);
     }
   };
 
@@ -91,17 +105,36 @@ const UsersPage = () => {
       key: "role",
     },
     {
+      title: "Статус",
+      key: "status",
+      render: (_, record) => (
+        <Tag color={record.is_blocked ? "red" : "green"}>
+          {record.is_blocked ? "Заблокирован" : "Активен"}
+        </Tag>
+      ),
+    },
+    {
       title: "Действия",
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button
-            danger
-            onClick={() => handleDelete(record.user_id)}
-            disabled={record.user_id === user?.user_id}
-          >
-            Удалить
-          </Button>
+          {record.is_blocked ? (
+            <Button
+              type="primary"
+              onClick={() => handleUnblock(record.user_id)}
+              disabled={record.user_id === user?.user_id}
+            >
+              Разблокировать
+            </Button>
+          ) : (
+            <Button
+              danger
+              onClick={() => handleBlock(record.user_id)}
+              disabled={record.user_id === user?.user_id}
+            >
+              Заблокировать
+            </Button>
+          )}
         </Space>
       ),
     },

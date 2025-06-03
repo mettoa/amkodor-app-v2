@@ -73,6 +73,14 @@ export const filterOrdersByDate = (orders, dateRange) => {
   return filtered;
 };
 
+// Фильтрация только доставленных заказов
+export const getDeliveredOrders = (orders) => {
+  if (!Array.isArray(orders)) return [];
+  return orders.filter(
+    (order) => order.status && order.status.toLowerCase() === "delivered"
+  );
+};
+
 export const getProductOrders = (orders) => {
   if (!Array.isArray(orders)) return [];
   const productMap = {};
@@ -127,16 +135,122 @@ export const getTopProducts = (orders, limit = 10) => {
     .slice(0, limit);
 };
 
+export const getCategoryStats = (orders) => {
+  if (!Array.isArray(orders)) return [];
+  const categoryMap = {};
+
+  orders.forEach((order) => {
+    if (!order.items || !Array.isArray(order.items)) return;
+    order.items.forEach((item) => {
+      if (!item) return;
+
+      // Используем новое поле category_name из данных заказа
+      const category = item.category_name || "Без категории";
+
+      if (!categoryMap[category]) {
+        categoryMap[category] = {
+          category,
+          totalOrders: 0,
+          totalQuantity: 0,
+          totalRevenue: 0,
+          uniqueProducts: new Set(),
+        };
+      }
+      categoryMap[category].totalOrders += 1;
+      categoryMap[category].totalQuantity += Number(item.quantity) || 0;
+      categoryMap[category].totalRevenue +=
+        (Number(item.quantity) || 0) * (parseFloat(item.price) || 0);
+      if (item.product_id) {
+        categoryMap[category].uniqueProducts.add(item.product_id);
+      }
+    });
+  });
+
+  return Object.values(categoryMap)
+    .map((cat) => ({
+      ...cat,
+      uniqueProducts: cat.uniqueProducts.size,
+      averageOrderValue:
+        cat.totalOrders > 0 ? cat.totalRevenue / cat.totalOrders : 0,
+    }))
+    .sort((a, b) => b.totalRevenue - a.totalRevenue);
+};
+
+// Статистика продаж (только доставленные заказы)
+export const getSalesStats = (orders) => {
+  const deliveredOrders = getDeliveredOrders(orders);
+  const allOrders = orders || [];
+
+  const salesRevenue = deliveredOrders.reduce(
+    (sum, order) => sum + (parseFloat(order.total_cost) || 0),
+    0
+  );
+
+  const totalRevenue = allOrders.reduce(
+    (sum, order) => sum + (parseFloat(order.total_cost) || 0),
+    0
+  );
+
+  return {
+    totalOrders: allOrders.length,
+    deliveredOrders: deliveredOrders.length,
+    pendingOrders: allOrders.length - deliveredOrders.length,
+    salesRevenue: salesRevenue,
+    totalRevenue: totalRevenue,
+    conversionRate:
+      allOrders.length > 0
+        ? (deliveredOrders.length / allOrders.length) * 100
+        : 0,
+    averageSaleValue:
+      deliveredOrders.length > 0 ? salesRevenue / deliveredOrders.length : 0,
+  };
+};
+
+// Статистика по статусам заказов
+export const getOrderStatusStats = (orders) => {
+  if (!Array.isArray(orders)) return [];
+  const statusMap = {};
+
+  orders.forEach((order) => {
+    const status = order.status || "Не указан";
+    if (!statusMap[status]) {
+      statusMap[status] = {
+        status,
+        count: 0,
+        totalRevenue: 0,
+        percentage: 0,
+      };
+    }
+    statusMap[status].count += 1;
+    statusMap[status].totalRevenue += parseFloat(order.total_cost) || 0;
+  });
+
+  const totalOrders = orders.length;
+  return Object.values(statusMap)
+    .map((stat) => ({
+      ...stat,
+      percentage: totalOrders > 0 ? (stat.count / totalOrders) * 100 : 0,
+      averageOrderValue: stat.count > 0 ? stat.totalRevenue / stat.count : 0,
+    }))
+    .sort((a, b) => b.count - a.count);
+};
+
+// Обновленная функция сводки с учетом продаж
 export const getSummary = (orders, dateRange) => {
   if (!Array.isArray(orders))
     return {
       totalOrders: 0,
+      deliveredOrders: 0,
       totalRevenue: "0.00",
+      salesRevenue: "0.00",
       averageOrderValue: "0.00",
+      averageSaleValue: "0.00",
+      conversionRate: "0.00",
       uniqueProducts: 0,
       dateRange: "Все время",
     };
 
+  const salesStats = getSalesStats(orders);
   const totalOrders = orders.length;
   const totalRevenue = orders.reduce(
     (sum, order) => sum + (parseFloat(order.total_cost) || 0),
@@ -151,13 +265,18 @@ export const getSummary = (orders, dateRange) => {
 
   return {
     totalOrders,
+    deliveredOrders: salesStats.deliveredOrders,
     totalRevenue: totalRevenue.toFixed(2),
+    salesRevenue: salesStats.salesRevenue.toFixed(2),
     averageOrderValue: averageOrderValue.toFixed(2),
+    averageSaleValue: salesStats.averageSaleValue.toFixed(2),
+    conversionRate: salesStats.conversionRate.toFixed(2),
     uniqueProducts,
     dateRange:
       dateRange && dateRange[0] && dateRange[1]
-        ? `${dateRange[0].format("YYYY-MM-DD")} - ${dateRange[1].format(
-            "YYYY-MM-DD"
+        ? // Форматируем даты в русском формате
+          `${dateRange[0].format("DD.MM.YYYY")} - ${dateRange[1].format(
+            "DD.MM.YYYY"
           )}`
         : "Все время",
   };
@@ -170,4 +289,79 @@ export const getTopProductsForSummary = (orders) => {
     totalQuantity: product.totalQuantity,
     totalRevenue: product.totalRevenue.toFixed(2),
   }));
+};
+
+// Временная статистика (по дням, неделям, месяцам)
+export const getTimeSeriesStats = (orders, period = "day") => {
+  if (!Array.isArray(orders)) return [];
+
+  const timeMap = {};
+  const deliveredOrders = getDeliveredOrders(orders);
+
+  orders.forEach((order) => {
+    if (!order.created_at) return;
+
+    let timeKey;
+    const orderDate = moment.utc(order.created_at);
+
+    switch (period) {
+      case "day":
+        timeKey = orderDate.format("YYYY-MM-DD");
+        break;
+      case "week":
+        timeKey = orderDate.startOf("week").format("YYYY-MM-DD");
+        break;
+      case "month":
+        timeKey = orderDate.format("YYYY-MM");
+        break;
+      default:
+        timeKey = orderDate.format("YYYY-MM-DD");
+    }
+
+    if (!timeMap[timeKey]) {
+      timeMap[timeKey] = {
+        period: timeKey,
+        totalOrders: 0,
+        deliveredOrders: 0,
+        totalRevenue: 0,
+        salesRevenue: 0,
+      };
+    }
+
+    timeMap[timeKey].totalOrders += 1;
+    timeMap[timeKey].totalRevenue += parseFloat(order.total_cost) || 0;
+
+    if (order.status && order.status.toLowerCase() === "delivered") {
+      timeMap[timeKey].deliveredOrders += 1;
+      timeMap[timeKey].salesRevenue += parseFloat(order.total_cost) || 0;
+    }
+  });
+
+  return Object.values(timeMap)
+    .map((item) => {
+      let displayPeriod = item.period;
+      try {
+        switch (period) {
+          case "day":
+            displayPeriod = moment.utc(item.period).format("DD.MM.YYYY");
+            break;
+          case "week":
+            const start = moment.utc(item.period);
+            const end = start.clone().endOf("week");
+            displayPeriod = `${start.format("DD.MM.YYYY")} - ${end.format(
+              "DD.MM.YYYY"
+            )}`;
+            break;
+          case "month":
+            displayPeriod = moment.utc(`${item.period}-01`).format("MM.YYYY");
+            break;
+          default:
+            displayPeriod = moment.utc(item.period).format("DD.MM.YYYY");
+        }
+      } catch (e) {
+        console.error("Ошибка форматирования даты:", e);
+      }
+      return { ...item, displayPeriod };
+    })
+    .sort((a, b) => a.period.localeCompare(b.period));
 };
